@@ -66,22 +66,24 @@
 
         .back-btn {
             display: inline-block;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(15px);
             color: white;
             padding: 1.5vh 3vw;
             text-decoration: none;
             border-radius: 25px;
             margin-bottom: 2vh;
             transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
             font-size: clamp(0.9rem, 2vw, 1rem);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
         .back-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.35);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.6);
         }
 
         .main-content {
@@ -117,6 +119,55 @@
             color: #cbd5e1;
             margin-bottom: 2vh;
             font-size: clamp(1rem, 2.5vw, 1.1rem);
+        }
+
+        .target-mean-section {
+            background: rgba(26, 26, 46, 0.6);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(167, 139, 250, 0.2);
+            border-radius: 1.5vh;
+            padding: 2vh 2vw;
+            margin-bottom: 2vh;
+        }
+
+        .target-mean-section h3 {
+            color: #ffffff;
+            margin-bottom: 1vh;
+            font-size: clamp(1.1rem, 2.5vw, 1.3rem);
+            font-weight: 600;
+        }
+
+        .target-mean-section p {
+            color: #cbd5e1;
+            margin-bottom: 1.5vh;
+            font-size: clamp(0.9rem, 2vw, 1rem);
+        }
+
+        .target-mean-options {
+            display: flex;
+            gap: 1vw;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .target-mean-options label {
+            display: flex;
+            align-items: center;
+            gap: 0.5vw;
+            color: #e2e8f0;
+            font-size: clamp(0.9rem, 2vw, 1rem);
+            cursor: pointer;
+            padding: 1vh 1.5vw;
+            border-radius: 0.8vh;
+            transition: all 0.3s ease;
+        }
+
+        .target-mean-options label:hover {
+            background: rgba(120, 119, 198, 0.1);
+        }
+
+        .target-mean-options input[type="radio"] {
+            accent-color: #06b6d4;
         }
 
         .student-input-table {
@@ -363,6 +414,11 @@
                 width: 80%;
                 max-width: 300px;
             }
+
+            .target-mean-options {
+                flex-direction: column;
+                align-items: flex-start;
+            }
         }
 
         @media (max-width: 480px) {
@@ -402,6 +458,25 @@
             <div class="input-section">
                 <h2>Enter Student Grades</h2>
                 <p>Enter each student's name and their raw score. Click "Add Student" to add more rows, or "Calculate Kennedy Curve" when you're ready to process the grades.</p>
+                
+                <div class="target-mean-section">
+                    <h3>Select Target Mean</h3>
+                    <p>Choose the desired class average based on your course type:</p>
+                    <div class="target-mean-options">
+                        <label>
+                            <input type="radio" name="targetMean" value="82" checked>
+                            Regular Class (82%)
+                        </label>
+                        <label>
+                            <input type="radio" name="targetMean" value="85">
+                            Elective (85%)
+                        </label>
+                        <label>
+                            <input type="radio" name="targetMean" value="90">
+                            Advanced Course (90%)
+                        </label>
+                    </div>
+                </div>
                 
                 <table class="student-input-table" id="inputTable">
                     <thead>
@@ -509,7 +584,7 @@
                     return;
                 }
 
-                students.push({ name, rawScore: score });
+                students.push({ name, rawScore: score, originalIndex: i });
             }
 
             if (students.length === 0) {
@@ -517,28 +592,30 @@
                 return;
             }
 
+            // Get target mean
+            const targetMean = parseInt(document.querySelector('input[name="targetMean"]:checked').value);
+
             // Calculate Kennedy Curve
-            const results = applyKennedyCurve(students);
+            const results = applyKennedyCurve(students, targetMean);
             displayResults(results);
         }
 
-        function applyKennedyCurve(students) {
-            // Sort students by raw score (descending)
-            const sortedStudents = [...students].sort((a, b) => b.rawScore - a.rawScore);
-            
-            const n = sortedStudents.length;
-            const results = [];
+        function applyKennedyCurve(students, targetMean) {
+            // Calculate current class mean
+            const sum = students.reduce((total, student) => total + student.rawScore, 0);
+            const currentMean = sum / students.length;
 
-            // Kennedy Curve formula: Scaled Score = 100 * (1 - (rank - 1) / (n - 1))
-            // This creates a curve where the highest score gets 100 and scores decrease based on rank
-            sortedStudents.forEach((student, index) => {
-                const rank = index + 1;
-                let scaledScore;
-                
-                if (n === 1) {
-                    scaledScore = 100; // If only one student, they get 100
-                } else {
-                    scaledScore = 100 * (1 - (rank - 1) / (n - 1));
+            // Compute scaling factor: k = (target mean - 10) / current mean
+            const scalingFactor = (targetMean - 10) / currentMean;
+
+            // Transform each raw score and maintain original order
+            const results = students.map((student, index) => {
+                // Calculate curved score: y = k * x
+                let scaledScore = scalingFactor * student.rawScore;
+
+                // Cap at 100% if needed
+                if (scaledScore > 100) {
+                    scaledScore = 100;
                 }
 
                 // Round to 1 decimal place
@@ -547,13 +624,13 @@
                 // Determine letter grade
                 const grade = getLetterGrade(scaledScore);
 
-                results.push({
+                return {
                     name: student.name,
                     rawScore: student.rawScore,
                     scaledScore: scaledScore,
                     grade: grade,
-                    rank: rank
-                });
+                    originalIndex: student.originalIndex
+                };
             });
 
             return results;
@@ -587,6 +664,9 @@
             const scaledMax = Math.max(...scaledScores);
             const scaledMin = Math.min(...scaledScores);
 
+            // Get target mean for display
+            const targetMean = parseInt(document.querySelector('input[name="targetMean"]:checked').value);
+
             // Display statistics
             const statsGrid = document.getElementById('statsGrid');
             statsGrid.innerHTML = `
@@ -603,6 +683,10 @@
                     <div class="stat-label">Scaled Score Average</div>
                 </div>
                 <div class="stat-item">
+                    <div class="stat-value">${targetMean}</div>
+                    <div class="stat-label">Target Mean</div>
+                </div>
+                <div class="stat-item">
                     <div class="stat-value">${rawMax}</div>
                     <div class="stat-label">Highest Raw Score</div>
                 </div>
@@ -614,13 +698,20 @@
                     <div class="stat-value">${scaledMax.toFixed(1)}</div>
                     <div class="stat-label">Highest Scaled Score</div>
                 </div>
+                <div class="stat-item">
+                    <div class="stat-value">${scaledMin.toFixed(1)}</div>
+                    <div class="stat-label">Lowest Scaled Score</div>
+                </div>
             `;
 
-            // Display results table
+            // Display results table in original order
             const resultsTableBody = document.getElementById('resultsTableBody');
             resultsTableBody.innerHTML = '';
 
-            results.forEach(result => {
+            // Sort by original index to maintain entry order
+            const sortedResults = [...results].sort((a, b) => a.originalIndex - b.originalIndex);
+
+            sortedResults.forEach(result => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${result.name}</td>
