@@ -7,6 +7,10 @@ function addStudentRow() {
         <td><button class="btn btn-danger" onclick="removeRow(this)">Remove</button></td>
     `;
     tbody.appendChild(newRow);
+    
+    // Add event listener to the new raw score input
+    const newScoreInput = newRow.querySelector('.raw-score');
+    newScoreInput.addEventListener('input', updateMaxScaledScore);
 }
 
 function removeRow(button) {
@@ -29,6 +33,10 @@ function clearAll() {
             </tr>
         `;
         document.getElementById('resultsSection').classList.add('hidden');
+        
+        // Re-add event listener to the remaining input
+        const remainingScoreInput = tbody.querySelector('.raw-score');
+        remainingScoreInput.addEventListener('input', updateMaxScaledScore);
     }
 }
 
@@ -116,8 +124,8 @@ function applyKennedyCurve(students, targetMean, maxScaledScore) {
             scaledScore = 100;
         }
 
-        // Round to 1 decimal place
-        scaledScore = Math.round(scaledScore * 10) / 10;
+        // Round to nearest whole number
+        scaledScore = Math.round(scaledScore);
 
         // Determine letter grade
         const grade = getLetterGrade(scaledScore);
@@ -206,11 +214,11 @@ function displayResults(results) {
             <div class="stat-label">Lowest Raw Score</div>
         </div>
         <div class="stat-item">
-            <div class="stat-value">${scaledMax.toFixed(1)}</div>
+            <div class="stat-value">${scaledMax}</div>
             <div class="stat-label">Highest Scaled Score</div>
         </div>
         <div class="stat-item">
-            <div class="stat-value">${scaledMin.toFixed(1)}</div>
+            <div class="stat-value">${scaledMin}</div>
             <div class="stat-label">Lowest Scaled Score</div>
         </div>
     `;
@@ -299,9 +307,9 @@ function updateMaxScaledScore() {
         }
     }
     
-    // Update the max scaled score input with the highest score or 100, whichever is higher
+    // Update the max scaled score input with the highest score or 99, whichever is higher
     if (highestScore > 0) {
-        maxScaledInput.value = Math.max(highestScore, 100);
+        maxScaledInput.value = Math.max(highestScore, 99);
     }
 }
 
@@ -324,7 +332,7 @@ document.addEventListener('DOMContentLoaded', function() {
         customInput.parentElement.classList.remove('active');
     }
     
-    // Add event listeners to raw score inputs to update max scaled score
+    // Add event listeners to existing raw score inputs to update max scaled score
     const scoreInputs = document.querySelectorAll('.raw-score');
     scoreInputs.forEach(input => {
         input.addEventListener('input', updateMaxScaledScore);
