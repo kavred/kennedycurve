@@ -74,23 +74,42 @@ function calculateKennedyCurve() {
         targetMean = parseInt(document.querySelector('input[name="targetMean"]:checked').value);
     }
 
+    // Get maximum scaled score
+    const maxScaledScore = parseFloat(document.getElementById('maxScaledScore').value);
+    if (isNaN(maxScaledScore) || maxScaledScore < 0 || maxScaledScore > 100) {
+        alert('Please enter a valid maximum scaled score (0-100).');
+        return;
+    }
+
+    // Validate that max scaled score is >= highest raw score
+    const highestRawScore = Math.max(...students.map(s => s.rawScore));
+    if (maxScaledScore < highestRawScore) {
+        alert(`Maximum scaled score (${maxScaledScore}%) must be equal to or higher than the highest raw score (${highestRawScore}%).`);
+        return;
+    }
+
     // Calculate Kennedy Curve
-    const results = applyKennedyCurve(students, targetMean);
+    const results = applyKennedyCurve(students, targetMean, maxScaledScore);
     displayResults(results);
 }
 
-function applyKennedyCurve(students, targetMean) {
+function applyKennedyCurve(students, targetMean, maxScaledScore) {
     // Calculate current class mean
     const sum = students.reduce((total, student) => total + student.rawScore, 0);
     const currentMean = sum / students.length;
 
-    // Compute scaling factor: k = (target mean - 10) / current mean
-    const scalingFactor = (targetMean - 10) / currentMean;
+    // Find the highest raw score
+    const highestRawScore = Math.max(...students.map(s => s.rawScore));
+
+    // Compute scaling factor: k = (max scaled score - 10) / highest raw score
+    // This ensures the highest score gets scaled to the maximum scaled score
+    const scalingFactor = (maxScaledScore - 10) / highestRawScore;
 
     // Transform each raw score and maintain original order
     const results = students.map((student, index) => {
-        // Calculate curved score: y = k * x
-        let scaledScore = scalingFactor * student.rawScore;
+        // Calculate curved score: y = k * x + 10
+        // The +10 ensures the lowest possible score is 10
+        let scaledScore = (scalingFactor * student.rawScore) + 10;
 
         // Cap at 100% if needed
         if (scaledScore > 100) {
@@ -152,6 +171,9 @@ function displayResults(results) {
         targetMean = parseInt(document.querySelector('input[name="targetMean"]:checked').value);
     }
 
+    // Get max scaled score for display
+    const maxScaledScore = parseFloat(document.getElementById('maxScaledScore').value);
+
     // Display statistics
     const statsGrid = document.getElementById('statsGrid');
     statsGrid.innerHTML = `
@@ -170,6 +192,10 @@ function displayResults(results) {
         <div class="stat-item">
             <div class="stat-value">${targetMean}</div>
             <div class="stat-label">Target Mean</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">${maxScaledScore}</div>
+            <div class="stat-label">Max Scaled Score</div>
         </div>
         <div class="stat-item">
             <div class="stat-value">${rawMax}</div>
@@ -252,10 +278,30 @@ function toggleCustomTarget() {
     const customRadio = document.getElementById('customTarget');
     
     if (customRadio.checked) {
-        customInput.style.display = 'block';
+        customInput.parentElement.classList.add('active');
         customInput.focus();
     } else {
-        customInput.style.display = 'none';
+        customInput.parentElement.classList.remove('active');
+    }
+}
+
+function updateMaxScaledScore() {
+    const nameInputs = document.querySelectorAll('.student-name');
+    const scoreInputs = document.querySelectorAll('.raw-score');
+    const maxScaledInput = document.getElementById('maxScaledScore');
+    
+    // Find the highest raw score
+    let highestScore = 0;
+    for (let i = 0; i < scoreInputs.length; i++) {
+        const score = parseFloat(scoreInputs[i].value);
+        if (!isNaN(score) && score > highestScore) {
+            highestScore = score;
+        }
+    }
+    
+    // Update the max scaled score input with the highest score or 100, whichever is higher
+    if (highestScore > 0) {
+        maxScaledInput.value = Math.max(highestScore, 100);
     }
 }
 
@@ -271,10 +317,16 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// Initialize custom target input as hidden
+// Initialize custom target input as hidden and set up event listeners
 document.addEventListener('DOMContentLoaded', function() {
     const customInput = document.getElementById('customTargetValue');
     if (customInput) {
-        customInput.style.display = 'none';
+        customInput.parentElement.classList.remove('active');
     }
+    
+    // Add event listeners to raw score inputs to update max scaled score
+    const scoreInputs = document.querySelectorAll('.raw-score');
+    scoreInputs.forEach(input => {
+        input.addEventListener('input', updateMaxScaledScore);
+    });
 });

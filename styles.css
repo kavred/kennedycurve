@@ -128,6 +128,7 @@ p {
     color: white;
     padding: 2vh 4vw;
     text-decoration: none;
+    border: none;
     border-radius: 50px;
     font-size: clamp(1rem, 2.5vw, 1.3rem);
     font-weight: 600;
@@ -137,6 +138,12 @@ p {
         0 0 0 1px rgba(255, 255, 255, 0.1);
     position: relative;
     overflow: hidden;
+    outline: none;
+    cursor: pointer;
+}
+
+.btn:focus {
+    outline: none;
 }
 
 .btn::before {
@@ -218,6 +225,11 @@ strong {
     font-size: clamp(0.9rem, 2vw, 1rem);
     font-weight: bold;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    outline: none;
+}
+
+.back-btn:focus {
+    outline: none;
 }
 
 .back-btn:hover {
@@ -293,6 +305,14 @@ strong {
     align-items: center;
     gap: 1vw;
     margin-top: 1vh;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.custom-target-input.active {
+    opacity: 1;
+    visibility: visible;
 }
 
 .custom-target-input input[type="number"] {
@@ -302,11 +322,53 @@ strong {
     font-size: clamp(0.9rem, 2vw, 1rem);
     background: rgba(15, 15, 35, 0.8);
     color: #e2e8f0;
-    width: 100px;
+    width: 120px;
     transition: all 0.3s ease;
 }
 
 .custom-target-input input[type="number"]:focus {
+    outline: none;
+    border-color: #06b6d4;
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+    background: rgba(15, 15, 35, 0.9);
+}
+
+.max-scaled-section {
+    background: rgba(26, 26, 46, 0.6);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(167, 139, 250, 0.2);
+    border-radius: 1.5vh;
+    padding: 2vh 2vw;
+    margin-bottom: 2vh;
+}
+
+.max-scaled-section h3 {
+    font-size: clamp(1.1rem, 2.5vw, 1.3rem);
+}
+
+.max-scaled-section p {
+    font-size: clamp(0.9rem, 2vw, 1rem);
+}
+
+.max-scaled-input {
+    display: flex;
+    align-items: center;
+    gap: 1vw;
+    margin-top: 1vh;
+}
+
+.max-scaled-input input[type="number"] {
+    padding: 1vh 1.5vw;
+    border: 2px solid rgba(120, 119, 198, 0.3);
+    border-radius: 0.8vh;
+    font-size: clamp(0.9rem, 2vw, 1rem);
+    background: rgba(15, 15, 35, 0.8);
+    color: #e2e8f0;
+    width: 120px;
+    transition: all 0.3s ease;
+}
+
+.max-scaled-input input[type="number"]:focus {
     outline: none;
     border-color: #06b6d4;
     box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);

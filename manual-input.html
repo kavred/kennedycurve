@@ -38,10 +38,19 @@
                         <label>
                             <input type="radio" name="targetMean" value="custom" id="customTarget" onchange="toggleCustomTarget()">
                             Custom Target Mean
+                            <div class="custom-target-input">
+                                <input type="number" id="customTargetValue" placeholder="Enter custom target mean" min="0" max="100" step="0.1">
+                                <span>%</span>
+                            </div>
                         </label>
                     </div>
-                    <div class="custom-target-input">
-                        <input type="number" id="customTargetValue" placeholder="Enter custom target mean" min="0" max="100" step="0.1">
+                </div>
+
+                <div class="max-scaled-section">
+                    <h3>Maximum Scaled Score</h3>
+                    <p>Set the highest possible scaled score. This should be equal to or higher than your highest raw score to ensure all scores are scaled up, not down.</p>
+                    <div class="max-scaled-input">
+                        <input type="number" id="maxScaledScore" placeholder="Enter max scaled score" min="0" max="100" step="0.1" value="100">
                         <span>%</span>
                     </div>
                 </div>
